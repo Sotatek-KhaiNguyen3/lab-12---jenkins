@@ -59,10 +59,12 @@ def signup():
                 db.session.add(new_user)
                 db.session.commit()
                 flash("User created!", category="success")
-                login_user(user, remember=True)
+                # Log in the newly created user (was previously logging in the old `user` variable)
+                login_user(new_user, remember=True)
                 return redirect(url_for("views.home"))
-            except:
-                "Error when create user!"
+            except Exception as e:
+                # keep minimal error handling and surface the message for debugging
+                flash(f"Error when create user: {e}", category="error")
     return render_template("signup.html", user=current_user)
 
 
@@ -71,3 +73,34 @@ def signup():
 def logout():
     logout_user()
     return redirect(url_for("user.login"))
+
+
+@user.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        # Verify current password
+        if not check_password_hash(current_user.password, current_password):
+            flash('Current password is incorrect.', category='error')
+            return render_template('change_password.html', user=current_user)
+
+        # Validate new password
+        if len(new_password) < 7:
+            flash('New password must be at least 7 characters long.', category='error')
+            return render_template('change_password.html', user=current_user)
+
+        if new_password != confirm_password:
+            flash('New password and confirmation do not match.', category='error')
+            return render_template('change_password.html', user=current_user)
+
+        # Update password
+        current_user.password = generate_password_hash(new_password)
+        db.session.commit()
+        flash('Password updated successfully.', category='success')
+        return redirect(url_for('views.home'))
+
+    return render_template('change_password.html', user=current_user)

@@ -12,7 +12,9 @@ SECRET_KEY = os.environ.get("KEY")
 DB_NAME = os.environ.get("DB_NAME")
 
 def create_database(app):
-    db_path = f'/app/data/{DB_NAME}'
+    db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', DB_NAME)
+    if not os.path.exists(os.path.dirname(db_path)):
+        os.makedirs(os.path.dirname(db_path))
     if not os.path.exists(db_path):
         with app.app_context():
             db.create_all()
@@ -23,7 +25,7 @@ def create_database(app):
 def create_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = SECRET_KEY
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:////app/data/{DB_NAME}'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", DB_NAME)}'
 
     db.init_app(app)
 
@@ -32,9 +34,12 @@ def create_app():
     create_database(app)
     from .user import user
     from .views import views
+    from .xss_demo import xss as xss_demo
 
     app.register_blueprint(user)
     app.register_blueprint(views)
+    # Mount XSS demo under /xss to keep it isolated from the main app
+    app.register_blueprint(xss_demo, url_prefix="/xss")
 
     login_manager = LoginManager()
     login_manager.login_view = "user.login"

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>XSS Demo Landing</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mini.css/2.3.4/mini-dark.min.css">
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('xss_demo.index') }}" class="logo">XSS Me</a>
+        <a href="{{ url_for('xss_demo.index') }}" class="button">Home</a>
+        <a href="{{ url_for('xss_demo.about') }}" class="button">About</a>
+    </header>
+    <div class="container">
+        <h3>Quick links</h3>
+        <ul>
+            <li><a href="{{ url_for('xss_demo.index') }}?page=%3Cstrong%3Ebig%20big%3C/strong%3E">Reflected HTML (breadcrumbs)</a></li>
+            <li><a href="{{ url_for('xss_demo.index') }}?page=%3Cscript%20src%3D%22/xss/static/advanced_phish.js%22%3E%3C/script%3E">Inject advanced_phish.js</a></li>
+            <li><a href="{{ url_for('xss_demo.vulnerable_search') }}?q=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E">Vulnerable search (alert)</a></li>
+        </ul>
+    </div>
+</body>
+    
+</html>
+
+
+
