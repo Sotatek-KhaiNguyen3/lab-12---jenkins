@@ -34,12 +34,9 @@ def create_app():
     create_database(app)
     from .user import user
     from .views import views
-    from .xss_demo import xss as xss_demo
 
     app.register_blueprint(user)
     app.register_blueprint(views)
-    # Mount XSS demo under /xss to keep it isolated from the main app
-    app.register_blueprint(xss_demo, url_prefix="/xss")
 
     login_manager = LoginManager()
     login_manager.login_view = "user.login"

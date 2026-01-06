@@ -96,5 +96,4 @@ todolist/xss_log.txt
 .pre-commit/
 .trivyignore
 .trivy-cache/
-.trivy-report.html
-
+.trivy-report.json

@@ -1,26 +1,87 @@
-name: SonarCloud Scan + Build Image
+# name: SonarCloud Scan + Build Image
+
+# on:
+#   pull_request:
+#     branches: [main, develop]
+#   push:
+#     branches: [main, develop]
+
+# jobs:
+#   sonarcloud:
+#     runs-on: ubuntu-latest
+
+#     permissions:
+#       contents: read
+#       packages: write
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       # SonarCloud Scan
+#       - name: SonarCloud Scan
+#         uses: SonarSource/sonarcloud-github-action@ba3875ecf642b2129de2b589510c81a8b53dbf4e
+#         with:
+#           args: >
+#             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+#             -Dsonar.organization=${{ secrets.SONAR_ORG }}
+#         env:
+#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#           SONAR_HOST_URL: https://sonarcloud.io
+
+#       # Check Quality Gate (BLOCK PIPELINE)
+#       - name: SonarCloud Quality Gate Check
+#         uses: sonarsource/sonarqube-quality-gate-action@95b1cc6c02a15c8ecc00c07b1c2a75ed61a14055
+#         timeout-minutes: 5
+#         env:
+#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+#       # CHỈ CHẠY NẾU QUALITY GATE PASS
+
+#       # Login GHCR
+#       - name: Normalize repository owner to lowercase
+#         id: lowercase_owner
+#         run: |
+#           owner="${{ github.repository_owner }}"
+#           echo "owner_lower=$(echo \"$owner\" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+#       - name: Login to GHCR
+#         uses: docker/login-action@2064b455456ba96d99e9abbb305f489bac30bfd5
+#         with:
+#           registry: ghcr.io
+#           username: ${{ steps.lowercase_owner.outputs.owner_lower }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#       # Build Docker image
+#       - name: Build Docker image
+#         run: |
+#           docker build -t ghcr.io/${{ steps.lowercase_owner.outputs.owner_lower }}/my-app:${{ github.sha }} .
+
+#       # Push image to GHCR
+#       - name: Push Docker image
+#         run: |
+#           docker push ghcr.io/${{ steps.lowercase_owner.outputs.owner_lower }}/my-app:${{ github.sha }}
+
+name: SonarCloud Scan
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
   push:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
 
 jobs:
   sonarcloud:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # SonarCloud Scan
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@ba3875ecf642b2129de2b589510c81a8b53dbf4e
+        uses: SonarSource/sonarcloud-github-action@ba3875ecf642b2129de2b589510c81a8b53dbf4e  
         with:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
@@ -28,35 +89,3 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
-
-      # Check Quality Gate (BLOCK PIPELINE)
-      - name: SonarCloud Quality Gate Check
-        uses: sonarsource/sonarqube-quality-gate-action@95b1cc6c02a15c8ecc00c07b1c2a75ed61a14055
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-      # CHỈ CHẠY NẾU QUALITY GATE PASS
-
-      # Login GHCR
-      - name: Normalize repository owner to lowercase
-        id: lowercase_owner
-        run: |
-          owner="${{ github.repository_owner }}"
-          echo "owner_lower=$(echo \"$owner\" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-
-      - name: Login to GHCR
-        uses: docker/login-action@2064b455456ba96d99e9abbb305f489bac30bfd5
-        with:
-          registry: ghcr.io
-          username: ${{ steps.lowercase_owner.outputs.owner_lower }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      # Build Docker image
-      - name: Build Docker image
-        run: |
-          docker build -t ghcr.io/${{ steps.lowercase_owner.outputs.owner_lower }}/my-app:${{ github.sha }} .
-
-      # Push image to GHCR
-      - name: Push Docker image
-        run: |
-          docker push ghcr.io/${{ steps.lowercase_owner.outputs.owner_lower }}/my-app:${{ github.sha }}
