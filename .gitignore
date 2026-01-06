@@ -85,3 +85,16 @@ node_modules/
 
 # Project-specific logs
 todolist/xss_log.txt
+
+# Sonar
+.sonar/
+.sonar/cache/
+
+# Thêm gitignore cho thư mục sinh ra từ pre-commit hook và quét trivy nếu có
+.pre-commit-config.yaml
+.trivy/
+.pre-commit/
+.trivyignore
+.trivy-cache/
+.trivy-report.html
+
