@@ -90,7 +90,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@c9db9161e9003e679d95d8e243058a9f81cbc7cd
 
       - name: Build image
         run: |
@@ -125,7 +125,7 @@ jobs:
         run: docker load -i /tmp/image/image.tar
 
       - name: Trivy scan image
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@841fb371db7b5cd339e5b2d55c92f5dbd730ac9f
         with:
           image-ref: "${{ env.IMAGE_REF }}"
           severity: "${{ env.TRIVY_SEVERITY }}"
