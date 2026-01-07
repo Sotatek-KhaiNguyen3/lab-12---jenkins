@@ -97,3 +97,6 @@ todolist/xss_log.txt
 .trivyignore
 .trivy-cache/
 .trivy-report.json
+
+# Ignore docker compose
+docker-compose.yml

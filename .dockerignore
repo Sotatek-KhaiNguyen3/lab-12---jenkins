@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite
+*.sqlite3
+.git
+.gitignore
+venv/
+todolist/venv/
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+
