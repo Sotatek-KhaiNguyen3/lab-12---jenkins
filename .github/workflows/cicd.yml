@@ -149,7 +149,7 @@ jobs:
         run: |
           docker stack deploy \
             --with-registry-auth \
-            --compose-file "~/deploy/docker-compose.yml" \
+            --compose-file "./deploy/docker-compose.yml" \
             "${STACK_NAME}"
 
 
