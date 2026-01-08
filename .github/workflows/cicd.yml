@@ -96,34 +96,6 @@ jobs:
         run: |
           docker build -t "${IMAGE_REF}" .
 
-      - name: Save image artifact
-        run: |
-          mkdir -p /tmp/image
-          docker save "${IMAGE_REF}" -o /tmp/image/image.tar
-        shell: bash
-
-      - name: Upload image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: built-image
-          path: /tmp/image/image.tar
-          if-no-files-found: error
-
-  trivy_scan:
-    runs-on: [self-hosted, scan]
-    needs: build_image
-    env:
-      IMAGE_REF: ${{ secrets.REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}
-    steps:
-      - name: Download image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: built-image
-          path: /tmp/image
-
-      - name: Load image
-        run: docker load -i /tmp/image/image.tar
-
       - name: Trivy scan image
         uses: aquasecurity/trivy-action@841fb371db7b5cd339e5b2d55c92f5dbd730ac9f
         with:
@@ -136,19 +108,10 @@ jobs:
 
   push_image:
     runs-on: [self-hosted, scan]
-    needs: trivy_scan
+    needs: build_image
     env:
       IMAGE_REF: ${{ secrets.REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}
     steps:
-      - name: Download image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: built-image
-          path: /tmp/image
-
-      - name: Load image
-        run: docker load -i /tmp/image/image.tar
-
       - name: Push image
         run: docker push "${IMAGE_REF}"
 
