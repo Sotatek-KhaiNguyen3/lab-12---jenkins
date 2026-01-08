@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# Create app user với UID 1000 (thường match host user)
+# Create app user với UID 1000
 RUN useradd -u 1000 -m -s /bin/bash appuser
 
 WORKDIR /app
@@ -8,7 +8,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# COPY CHỈ NHỮNG FILE CẦN THIẾT
+COPY app.py .
+COPY todolist/ ./todolist/
 
 # Set ownership cho appuser
 RUN chown -R appuser:appuser /app
