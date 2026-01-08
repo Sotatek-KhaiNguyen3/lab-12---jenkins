@@ -137,7 +137,10 @@ jobs:
     needs: push_image
     env:
       STACK_NAME: ${{ secrets.STACK_NAME }}
-      ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
+      IMAGE_REF: ${{ secrets.REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ github.ref_name }}-${{ github.sha }}
+      KEY: ${{ secrets.KEY }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      REPLICAS: ${{ secrets.REPLICAS }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -146,7 +149,6 @@ jobs:
         run: |
           docker stack deploy \
             --with-registry-auth \
-            --env-file "deploy/${ENVIRONMENT}/.env" \
             --compose-file "deploy/docker-compose.yml" \
             "${STACK_NAME}"
 
