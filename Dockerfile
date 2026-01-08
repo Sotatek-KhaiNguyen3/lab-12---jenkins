@@ -1,32 +1,21 @@
-FROM python:3.13-slim AS base
+FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    FLASK_ENV=production \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_NO_CACHE_DIR=off
+# Create app user với UID 1000 (thường match host user)
+RUN useradd -u 1000 -m -s /bin/bash appuser
 
 WORKDIR /app
 
-# Install build dependencies (kept minimal)
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt ./
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py ./app.py
-COPY todolist ./todolist
+COPY . .
 
-# Create a non-root user for running the app
-RUN useradd --create-home --shell /bin/bash appuser && \
-    chown -R appuser:appuser /app
+# Set ownership cho appuser
+RUN chown -R appuser:appuser /app
+
+# Tạo thư mục data với quyền đúng
+RUN mkdir -p /app/data && chown -R appuser:appuser /app/data
+
 USER appuser
 
-EXPOSE 5000
-
-# Default env for DB; override in runtime
-ENV DB_NAME=todolist.db
-
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
-
+CMD ["python", "app.py"]
