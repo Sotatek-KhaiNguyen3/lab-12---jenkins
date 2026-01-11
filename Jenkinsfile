@@ -55,8 +55,7 @@ pipeline {
                           -Dsonar.organization=${SONAR_ORG} \
                           -Dsonar.sources=. \
                           -Dsonar.host.url=https://sonarcloud.io \
-                          -Dsonar.login=${SONAR_TOKEN}
-                          -Dsonar.analysis.automatic=${params.RUN_SONAR ? 'false' : 'true'}
+                          -Dsonar.login=${SONAR_TOKEN} 
                     """
 
                 }
