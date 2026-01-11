@@ -35,16 +35,15 @@ pipeline {
         }
         
         stage('Lint & Test') {
-            steps {
-                sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install flake8 black detect-secrets
-                    flake8 todolist/ --count --select=E9,F63,F7,F82 || true
-                    detect-secrets scan --all-files --force-use-all-plugins || true
-                '''
-            }
+    steps {
+        sh '''
+            # Không dùng venv, cài trực tiếp
+            pip3 install --user flake8 black detect-secrets || true
+            python3 -m flake8 todolist/ --count --select=E9,F63,F7,F82 || true
+            python3 -m detect_secrets scan --all-files --force-use-all-plugins || true
+        '''
         }
+    }
         
         stage('SonarQube') {
             when { expression { params.RUN_SONAR == true } }
