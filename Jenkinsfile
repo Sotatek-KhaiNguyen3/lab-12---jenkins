@@ -110,37 +110,35 @@ pipeline {
         }
         
         stage('Deploy to Swarm') {
-            steps {
-                script {
-                    // Environment config
-                    def configs = [
-                        'dev': [stack: 'todolist-dev', replicas: '1', db: 'todolist_dev'],
-                        'staging': [stack: 'todolist-staging', replicas: '2', db: 'todolist_staging'],
-                        'prod': [stack: 'todolist-prod', replicas: '2', db: 'todolist']
-                    ]
-                    
-                    def cfg = configs[params.ENVIRONMENT]
-                    
-                    sh """
-                        export STACK_NAME="${cfg.stack}"
-                        export IMAGE_REF="${IMAGE_REF}"
-                        export KEY="${DB_KEY}"
-                        export DB_NAME="${cfg.db}"
-                        export REPLICAS="${cfg.replicas}"
-                        
-                        docker stack deploy \\
-                          --with-registry-auth \\
-                          -c deploy/docker-compose.yml \\
-                          \${STACK_NAME}
-                        
-                        echo "✅ Deployed to ${params.ENVIRONMENT}"
-                        sleep 5
-                        docker stack services \${STACK_NAME}
-                    """
-                }
-            }
+    steps {
+        script {
+            def configs = [
+                'dev': [stack: 'todolist-dev', replicas: '1', db: 'todolist_dev'],
+                'staging': [stack: 'todolist-staging', replicas: '2', db: 'todolist_staging'],
+                'prod': [stack: 'todolist-prod', replicas: '2', db: 'todolist']
+            ]
+            
+            def cfg = configs[params.ENVIRONMENT]
+            
+            sh """
+                export STACK_NAME="${cfg.stack}"
+                export IMAGE_REF="${IMAGE_REF}"
+                export KEY="${DB_KEY}"
+                export DB_NAME="${cfg.db}"
+                export REPLICAS="${cfg.replicas}"
+                
+                docker stack deploy \\
+                  --with-registry-auth \\
+                  -c "$HOME/deploy/docker-compose.yml" \\
+                  \${STACK_NAME}
+                
+                echo "✅ Deployed to ${params.ENVIRONMENT}"
+                sleep 5
+                docker stack services \${STACK_NAME}
+            """
         }
     }
+}
     
     post {
         always {
