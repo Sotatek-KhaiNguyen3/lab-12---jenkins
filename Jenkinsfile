@@ -147,7 +147,6 @@ pipeline {
     post {
         always {
             cleanWs()
-            sh 'sudo docker system prune -f'
         }
         success {
             echo "✅ Pipeline thành công!"
