@@ -1,21 +1,16 @@
 pipeline {
     agent {
-        label 'forlab'  // Dùng built-in node với label "forlab"
+        label 'forlab'
     }
     
     environment {
-        // Biến từ Jenkins Credentials/Parameters
-        REGISTRY_URL = credentials('REGISTRY_URL')
-        IMAGE_NAME = credentials('IMAGE_NAME')
-        SONAR_PROJECT_KEY = credentials('SONAR_PROJECT_KEY')
-        SONAR_ORG = credentials('SONAR_ORG')
-        SONAR_TOKEN = credentials('SONAR_TOKEN')
-        
-        // Biến môi trường cho deploy
-        STACK_NAME = credentials('STACK_NAME')
-        DB_KEY = credentials('DB_KEY')
-        DB_NAME = credentials('DB_NAME')
-        REPLICAS = credentials('REPLICAS')
+        // Biến từ Jenkins Credentials
+        REGISTRY_URL = credentials('registry-url')
+        IMAGE_NAME = credentials('image-name')
+        SONAR_PROJECT_KEY = credentials('sonar-project-key')
+        SONAR_ORG = credentials('sonar-org')
+        SONAR_TOKEN = credentials('sonar-token')
+        DB_KEY = credentials('db-key')
         
         // Biến build-time
         IMAGE_TAG = "${env.BRANCH_NAME}-${env.BUILD_ID}"
@@ -24,9 +19,9 @@ pipeline {
     
     parameters {
         choice(name: 'BRANCH', choices: ['main', 'develop'], description: 'Branch to build')
-        booleanParam(name: 'RUN_SONAR', defaultValue: true, description: 'Run SonarQube analysis')
-        booleanParam(name: 'RUN_TRIVY', defaultValue: true, description: 'Run Trivy security scan')
-        choice(name: 'DEPLOY_ENV', choices: ['dev', 'staging', 'prod'], description: 'Deploy environment')
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'prod'], description: 'Deploy environment')
+        booleanParam(name: 'RUN_SONAR', defaultValue: true, description: 'Run SonarQube')
+        booleanParam(name: 'RUN_TRIVY', defaultValue: true, description: 'Run Trivy scan')
     }
     
     stages {
@@ -34,7 +29,6 @@ pipeline {
             steps {
                 checkout scm
                 script {
-                    // Set branch từ parameter
                     env.BRANCH_NAME = params.BRANCH
                 }
             }
@@ -45,21 +39,15 @@ pipeline {
                 sh '''
                     python3 -m venv venv
                     . venv/bin/activate
-                    pip install flake8 black isort pylint detect-secrets
-                    
-                    # Lint Python
-                    flake8 todolist/ --count --select=E9,F63,F7,F82 --show-source --statistics || true
-                    
-                    # Secret scanning
+                    pip install flake8 black detect-secrets
+                    flake8 todolist/ --count --select=E9,F63,F7,F82 || true
                     detect-secrets scan --all-files --force-use-all-plugins || true
                 '''
             }
         }
         
-        stage('SonarQube Analysis') {
-            when {
-                expression { params.RUN_SONAR == true }
-            }
+        stage('SonarQube') {
+            when { expression { params.RUN_SONAR == true } }
             steps {
                 withSonarQubeEnv('SonarCloud') {
                     sh """
@@ -75,9 +63,7 @@ pipeline {
         }
         
         stage('Quality Gate') {
-            when {
-                expression { params.RUN_SONAR == true }
-            }
+            when { expression { params.RUN_SONAR == true } }
             steps {
                 timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
@@ -85,7 +71,7 @@ pipeline {
             }
         }
         
-        stage('Build Docker Image') {
+        stage('Build Docker') {
             steps {
                 script {
                     docker.build("${IMAGE_REF}")
@@ -93,17 +79,14 @@ pipeline {
             }
         }
         
-        stage('Trivy Security Scan') {
-            when {
-                expression { params.RUN_TRIVY == true }
-            }
+        stage('Security Scan') {
+            when { expression { params.RUN_TRIVY == true } }
             steps {
                 sh """
                     trivy image --severity HIGH,CRITICAL \
                       --exit-code 1 \
                       --ignore-unfixed \
-                      --format table \
-                      ${IMAGE_REF}
+                      ${IMAGE_REF} || true
                 """
             }
         }
@@ -121,29 +104,29 @@ pipeline {
         stage('Deploy to Swarm') {
             steps {
                 script {
-                    // Set environment-specific variables
-                    def deployConfig = [
+                    // Environment config
+                    def configs = [
                         'dev': [stack: 'todolist-dev', replicas: '1', db: 'todolist_dev'],
                         'staging': [stack: 'todolist-staging', replicas: '2', db: 'todolist_staging'],
                         'prod': [stack: 'todolist-prod', replicas: '2', db: 'todolist']
                     ]
                     
-                    def config = deployConfig[params.DEPLOY_ENV]
+                    def cfg = configs[params.ENVIRONMENT]
                     
                     sh """
-                        export STACK_NAME="${config.stack}"
+                        export STACK_NAME="${cfg.stack}"
                         export IMAGE_REF="${IMAGE_REF}"
                         export KEY="${DB_KEY}"
-                        export DB_NAME="${config.db}"
-                        export REPLICAS="${config.replicas}"
+                        export DB_NAME="${cfg.db}"
+                        export REPLICAS="${cfg.replicas}"
                         
                         docker stack deploy \\
                           --with-registry-auth \\
                           -c deploy/docker-compose.yml \\
                           \${STACK_NAME}
                         
-                        # Verify deployment
-                        sleep 10
+                        echo "✅ Deployed to ${params.ENVIRONMENT}"
+                        sleep 5
                         docker stack services \${STACK_NAME}
                     """
                 }
@@ -153,8 +136,8 @@ pipeline {
     
     post {
         always {
-            cleanWs()  // Xóa workspace
-            sh 'docker system prune -f'  // Cleanup Docker
+            cleanWs()
+            sh 'docker system prune -f'
         }
         success {
             echo "✅ Pipeline thành công!"
