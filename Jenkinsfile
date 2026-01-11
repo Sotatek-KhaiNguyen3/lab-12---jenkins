@@ -63,13 +63,21 @@ pipeline {
         }
         
         stage('Quality Gate') {
-            when { expression { params.RUN_SONAR == true } }
-            steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+    when { expression { params.RUN_SONAR == true } }
+    steps {
+        script {
+            timeout(time: 10, unit: 'MINUTES') {
+                def qg = waitForQualityGate()
+                echo "Quality Gate status: ${qg.status}"
+                if (qg.status == 'NONE') {
+                    echo "⚠️ No quality gate defined in SonarCloud"
+                } else if (qg.status != 'OK') {
+                    error "Quality gate failed: ${qg.status}"
                 }
             }
         }
+    }
+}
         
         stage('Build Docker') {
             steps {
