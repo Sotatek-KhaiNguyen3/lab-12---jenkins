@@ -13,7 +13,9 @@ pipeline {
         DB_KEY = credentials('db-key')
         
         // Biến build-time
-        IMAGE_TAG = "${env.BRANCH_NAME}-${env.BUILD_ID}"
+        // IMAGE_TAG = "${env.BRANCH_NAME}-${env.BUILD_ID}"
+        // IMAGE_REF = "${REGISTRY_URL}/${IMAGE_NAME}:${IMAGE_TAG}"
+        IMAGE_TAG = "${env.BRANCH_NAME}-${env.GIT_COMMIT}"
         IMAGE_REF = "${REGISTRY_URL}/${IMAGE_NAME}:${IMAGE_TAG}"
     }
     
