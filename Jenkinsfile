@@ -35,49 +35,49 @@ pipeline {
         }
         
         stage('Lint & Test') {
-            steps {
-                sh '''
-                    # Không dùng venv, cài trực tiếp
-                    pip3 install --user flake8 black detect-secrets || true
-                    python3 -m flake8 todolist/ --count --select=E9,F63,F7,F82 || true
-                    python3 -m detect_secrets scan --all-files --force-use-all-plugins || true
-                '''
-            }
+    steps {
+        sh '''
+            # Không dùng venv, cài trực tiếp
+            pip3 install --user flake8 black detect-secrets || true
+            python3 -m flake8 todolist/ --count --select=E9,F63,F7,F82 || true
+            python3 -m detect_secrets scan --all-files --force-use-all-plugins || true
+        '''
         }
+    }
         
         stage('SonarQube') {
             when { expression { params.RUN_SONAR == true } }
             steps {
                 withSonarQubeEnv('SonarCloud') {
-                    sh """
-                        sonar-scanner \
-                          -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
-                          -Dsonar.organization=${env.SONAR_ORG} \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=https://sonarcloud.io \
-                          -Dsonar.login=${env.SONAR_TOKEN}
-                    """
+                                        sh """
+                sonar-scanner \
+                    -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                    -Dsonar.organization=${SONAR_ORG} \
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=https://sonarcloud.io \
+                    -Dsonar.login=${SONAR_TOKEN}
+                """
 
                 }
             }
         }
         
         stage('Quality Gate') {
-            when { expression { params.RUN_SONAR == true } }
-            steps {
-                script {
-                    timeout(time: 10, unit: 'MINUTES') {
-                        def qg = waitForQualityGate()
-                        echo "Quality Gate status: ${qg.status}"
-                        if (qg.status == 'NONE') {
-                            echo "⚠️ No quality gate defined in SonarCloud"
-                        } else if (qg.status != 'OK') {
-                            error "Quality gate failed: ${qg.status}"
-                        }
-                    }
+    when { expression { params.RUN_SONAR == true } }
+    steps {
+        script {
+            timeout(time: 10, unit: 'MINUTES') {
+                def qg = waitForQualityGate()
+                echo "Quality Gate status: ${qg.status}"
+                if (qg.status == 'NONE') {
+                    echo "⚠️ No quality gate defined in SonarCloud"
+                } else if (qg.status != 'OK') {
+                    error "Quality gate failed: ${qg.status}"
                 }
             }
         }
+    }
+}
         
         stage('Build Docker') {
             steps {
@@ -112,6 +112,7 @@ pipeline {
         stage('Deploy to Swarm') {
             steps {
                 script {
+                    // Environment config
                     def configs = [
                         'dev': [stack: 'todolist-dev', replicas: '1', db: 'todolist_dev'],
                         'staging': [stack: 'todolist-staging', replicas: '2', db: 'todolist_staging'],
@@ -139,6 +140,7 @@ pipeline {
                 }
             }
         }
+    }
     
     post {
         always {
