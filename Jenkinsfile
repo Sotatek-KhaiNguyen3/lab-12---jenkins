@@ -40,9 +40,9 @@ pipeline {
     steps {
         sh '''
             # Không dùng venv, cài trực tiếp
-            pip3 install --user flake8 black detect-secrets || true
-            python3 -m flake8 todolist/ --count --select=E9,F63,F7,F82 || true
-            python3 -m detect_secrets scan --all-files --force-use-all-plugins || true
+            pip3 install --user flake8 black detect-secrets 
+            python3 -m flake8 todolist/ --count --select=E9,F63,F7,F82 
+            python3 -m detect_secrets scan --all-files --force-use-all-plugins 
         '''
         }
     }
@@ -96,7 +96,7 @@ pipeline {
                     trivy image --severity HIGH,CRITICAL \
                       --exit-code 1 \
                       --ignore-unfixed \
-                      ${IMAGE_REF} || true
+                      ${IMAGE_REF} 
                 """
             }
         }
